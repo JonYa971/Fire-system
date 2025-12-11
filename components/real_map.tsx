@@ -31,9 +31,9 @@ export type RealMapProps = {
   onClickTarget?: (t: Target) => void
 }
 
-// ✅ 华东默认中心（上海附近）
-const DEFAULT_CENTER: LatLng = { lat: 31.2304, lng: 121.4737 }
-const DEFAULT_ZOOM = 7
+// ✅ 北京中心点（作为初始中心，会被 AutoFitBounds 覆盖）
+const DEFAULT_CENTER: LatLng = { lat: 39.95, lng: 116.4 }
+const DEFAULT_ZOOM = 10  // 初始缩放，会被自动调整覆盖
 
 function isValidLatLng(lat: any, lng: any) {
   const la = Number(lat)
@@ -42,9 +42,13 @@ function isValidLatLng(lat: any, lng: any) {
 }
 
 // 根据 zoom 因子同步 Leaflet zoom
+// 注意：只在 zoomFactor !== 1 时才调整缩放，允许自适应缩放工作
 function SyncZoom({ zoomFactor }: { zoomFactor: number }) {
   const map = useMap()
   useEffect(() => {
+    // 只有在 zoomFactor 不是默认值 1 时才调整
+    if (zoomFactor === 1) return
+    
     const baseZoom = 13
     const leafletZoom = baseZoom + (zoomFactor - 1) * 2
     map.setZoom(leafletZoom)
@@ -52,17 +56,45 @@ function SyncZoom({ zoomFactor }: { zoomFactor: number }) {
   return null
 }
 
-// 初次加载：自动 fitBounds（只执行一次）
-function FitBoundsOnce({ points }: { points: LatLng[] }) {
+// 自动 fitBounds - 自适应缩放到所有标记
+function AutoFitBounds({ points }: { points: LatLng[] }) {
   const map = useMap()
-  const did = useRef(false)
+  const hasRunRef = useRef(false)
 
   useEffect(() => {
-    if (did.current) return
-    if (!points || points.length === 0) return
-    const bounds = L.latLngBounds(points.map((p) => L.latLng(p.lat, p.lng)))
-    map.fitBounds(bounds.pad(0.2))
-    did.current = true
+    if (!map || !points || points.length === 0) {
+      return
+    }
+
+    // 仅在第一次有数据时执行
+    if (hasRunRef.current) return
+
+    // 等待地图容器加载完成
+    setTimeout(() => {
+      try {
+        console.log("AutoFitBounds 正在调整视图，点数:", points.length)
+        
+        // 创建 LatLngBounds
+        const bounds = L.latLngBounds(points.map((p) => [p.lat, p.lng]))
+        
+        // 使用 fitBounds 自动调整视图
+        // 参数说明：
+        // - padding: 边界填充（像素）
+        // - maxZoom: 最大缩放级别，值越小显示范围越大
+        // Leaflet 缩放级别：0=世界地图, 10=城市, 15=街道, 19=建筑
+        map.fitBounds(bounds, {
+          padding: [100, 100],    // 所有边都留 100px 空间
+          maxZoom: 5,             // 降低到 5 显示更大范围（约500km+）
+          animate: true,
+          duration: 0.8
+        })
+        
+        console.log("AutoFitBounds 调整完成")
+        hasRunRef.current = true
+      } catch (err) {
+        console.error("AutoFitBounds 出错:", err)
+      }
+    }, 300)
   }, [map, points])
 
   return null
@@ -155,7 +187,7 @@ export default function RealMap(props: RealMapProps) {
     onClickTarget,
   } = props
 
-  // ✅ 默认华东，不再北京；也不再自动用定位覆盖
+  // ✅ 北京中心点
   const [center] = useState<LatLng>(DEFAULT_CENTER)
 
   const validFirepowers = useMemo(
@@ -167,10 +199,25 @@ export default function RealMap(props: RealMapProps) {
     [targets],
   )
 
+  // 调试：打印数据
+  useEffect(() => {
+    console.log("RealMap props:", { 
+      firepowersCount: firepowers.length, 
+      targetsCount: targets.length,
+      validFirepowersCount: validFirepowers.length,
+      validTargetsCount: validTargets.length,
+    })
+  }, [firepowers, targets, validFirepowers, validTargets])
+
   const fitPoints = useMemo<LatLng[]>(() => {
     const pts: LatLng[] = []
     validFirepowers.forEach((fp) => pts.push({ lat: fp.gps_lat, lng: fp.gps_lng }))
     validTargets.forEach((t) => pts.push({ lat: t.gps_lat, lng: t.gps_lng }))
+    
+    if (pts.length > 0) {
+      console.log("FitPoints 已准备:", pts)
+    }
+    
     return pts
   }, [validFirepowers, validTargets])
 
@@ -217,15 +264,31 @@ export default function RealMap(props: RealMapProps) {
         }
       `}</style>
 
-      <div className="w-full h-full">
-        <MapContainer center={center} zoom={DEFAULT_ZOOM} style={{ width: "100%", height: "100%" }}>
+      <div className="w-full h-full relative">
+        {validTargets.length === 0 && validFirepowers.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-50 rounded">
+            <div className="text-center text-muted-foreground">
+              <p>加载数据中...</p>
+            </div>
+          </div>
+        )}
+        
+        <MapContainer center={center} zoom={DEFAULT_ZOOM} style={{ width: "100%", height: "100%" }} minZoom={8} maxZoom={18}>
           <SyncZoom zoomFactor={zoom} />
-          <FitBoundsOnce points={fitPoints} />
+          <AutoFitBounds points={fitPoints} />
 
           <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            maxNativeZoom={19}
+            maxZoom={20}
+          />
+          
+          {/* 高德地图备用图层 - 可选 */}
+          {/* <TileLayer
             url="https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}"
             subdomains={["1", "2", "3", "4"]}
-          />
+          /> */}
 
           {validFirepowers.map((fp) => (
             <Marker

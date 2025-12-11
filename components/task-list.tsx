@@ -150,21 +150,12 @@ export function TaskList({
       </div>
 
       {/* 分页控制条 */}
-      <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border/60">
-        {/* 左侧：每页固定 3 条 */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>每页</span>
-          <span className="px-2 py-1 rounded border border-border bg-muted/30 text-foreground">
-            {PAGE_SIZE}
-          </span>
-          <span>条</span>
-        </div>
-
-        {/* 右侧：分页导航 + 跳转 */}
-        <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border/60">
+        {/* 分页导航 + 跳转 */}
+        <div className="flex items-center gap-1">
           {/* 首页 */}
           <button
-            className={`h-7 w-7 inline-flex items-center justify-center rounded border ${
+            className={`h-6 w-6 inline-flex items-center justify-center rounded border text-xs ${
               canPrev ? "border-border hover:bg-muted/40" : "border-border/40 opacity-40 cursor-not-allowed"
             }`}
             onClick={() => canPrev && jumpTo(1)}
@@ -172,12 +163,12 @@ export function TaskList({
             aria-label="首页"
             title="首页"
           >
-            <ChevronsLeft className="w-4 h-4" />
+            <ChevronsLeft className="w-3 h-3" />
           </button>
 
           {/* 上一页 */}
           <button
-            className={`h-7 w-7 inline-flex items-center justify-center rounded border ${
+            className={`h-6 w-6 inline-flex items-center justify-center rounded border text-xs ${
               canPrev ? "border-border hover:bg-muted/40" : "border-border/40 opacity-40 cursor-not-allowed"
             }`}
             onClick={() => canPrev && jumpTo(page - 1)}
@@ -185,27 +176,27 @@ export function TaskList({
             aria-label="上一页"
             title="上一页"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-3 h-3" />
           </button>
 
           {/* 页码按钮 */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             {pageNumbers[0] > 1 && (
               <>
                 <button
-                  className="h-7 px-2 rounded border border-border hover:bg-muted/40 text-xs"
+                  className="h-6 px-1.5 rounded border border-border hover:bg-muted/40 text-xs"
                   onClick={() => jumpTo(1)}
                 >
                   1
                 </button>
-                <span className="px-1 text-xs text-muted-foreground">…</span>
+                <span className="px-0.5 text-xs text-muted-foreground">…</span>
               </>
             )}
 
             {pageNumbers.map((p) => (
               <button
                 key={p}
-                className={`h-7 px-2 rounded border text-xs ${
+                className={`h-6 px-1.5 rounded border text-xs font-medium ${
                   p === page
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-border hover:bg-muted/40"
@@ -218,9 +209,9 @@ export function TaskList({
 
             {pageNumbers[pageNumbers.length - 1] < totalPages && (
               <>
-                <span className="px-1 text-xs text-muted-foreground">…</span>
+                <span className="px-0.5 text-xs text-muted-foreground">…</span>
                 <button
-                  className="h-7 px-2 rounded border border-border hover:bg-muted/40 text-xs"
+                  className="h-6 px-1.5 rounded border border-border hover:bg-muted/40 text-xs"
                   onClick={() => jumpTo(totalPages)}
                 >
                   {totalPages}
@@ -231,7 +222,7 @@ export function TaskList({
 
           {/* 下一页 */}
           <button
-            className={`h-7 w-7 inline-flex items-center justify-center rounded border ${
+            className={`h-6 w-6 inline-flex items-center justify-center rounded border text-xs ${
               canNext ? "border-border hover:bg-muted/40" : "border-border/40 opacity-40 cursor-not-allowed"
             }`}
             onClick={() => canNext && jumpTo(page + 1)}
@@ -239,12 +230,12 @@ export function TaskList({
             aria-label="下一页"
             title="下一页"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3 h-3" />
           </button>
 
           {/* 末页 */}
           <button
-            className={`h-7 w-7 inline-flex items-center justify-center rounded border ${
+            className={`h-6 w-6 inline-flex items-center justify-center rounded border text-xs ${
               canNext ? "border-border hover:bg-muted/40" : "border-border/40 opacity-40 cursor-not-allowed"
             }`}
             onClick={() => canNext && jumpTo(totalPages)}
@@ -252,14 +243,14 @@ export function TaskList({
             aria-label="末页"
             title="末页"
           >
-            <ChevronsRight className="w-4 h-4" />
+            <ChevronsRight className="w-3 h-3" />
           </button>
 
           {/* 输入跳转 */}
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <span className="ml-2">跳转</span>
+          <div className="flex items-center gap-0.5 text-xs text-muted-foreground">
+            <span>跳转</span>
             <input
-              className="h-7 w-14 rounded border border-border bg-muted/30 px-2 text-foreground text-xs outline-none focus:border-primary"
+              className="h-6 w-10 rounded border border-border bg-muted/30 px-1 text-foreground text-xs outline-none focus:border-primary"
               value={pageInput}
               onChange={(e) => {
                 const v = e.target.value
@@ -272,10 +263,10 @@ export function TaskList({
             />
             <span>/ {totalPages}</span>
             <button
-              className="h-7 px-2 rounded border border-border hover:bg-muted/40 text-xs text-foreground"
+              className="h-6 px-1.5 rounded border border-border hover:bg-muted/40 text-xs text-foreground"
               onClick={handleJump}
             >
-              跳转
+              转
             </button>
           </div>
         </div>

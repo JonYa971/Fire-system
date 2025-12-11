@@ -158,33 +158,45 @@ export default function CommandCenter() {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
-      <main className="flex-1 p-4 space-y-4">
-        {loadError && (
-          <div className="text-sm text-red-500 border border-red-500/40 rounded px-3 py-2">
-            {loadError}
-          </div>
-        )}
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {/* 固定顶部：错误提示 + 统计卡片 + 标签栏 */}
+        <div className="flex-0 p-4 space-y-4 border-b border-border">
+          {loadError && (
+            <div className="text-sm text-red-500 border border-red-500/40 rounded px-3 py-2">
+              {loadError}
+            </div>
+          )}
 
-        <StatsCards
-          totalTargets={targets.length}
-          destroyedTargets={targets.filter((t) => t.target_health === 0).length}
-          activeTasks={tasks.filter((t) => t.status === "accepted").length}
-          completedTasks={tasks.filter((t) => t.status === "completed").length}
-          totalAmmoUsed={tasks
-            .filter((t) => t.status === "completed")
-            .reduce((sum, t) => sum + t.ammo_count, 0)}
-        />
+          <StatsCards
+            totalTargets={targets.length}
+            destroyedTargets={targets.filter((t) => t.target_health === 0).length}
+            activeTasks={tasks.filter((t) => t.status === "accepted").length}
+            completedTasks={tasks.filter((t) => t.status === "completed").length}
+            totalAmmoUsed={tasks
+              .filter((t) => t.status === "completed")
+              .reduce((sum, t) => sum + t.ammo_count, 0)}
+          />
 
-        <Tabs defaultValue="realtime" className="flex-1">
-          <TabsList className="bg-card/50 border border-border">
-            <TabsTrigger value="realtime">实时作战</TabsTrigger>
-            <TabsTrigger value="review">战后复盘</TabsTrigger>
-          </TabsList>
+          <Tabs defaultValue="realtime" className="w-full">
+            <TabsList className="bg-card/50 border border-border">
+              <TabsTrigger value="realtime">实时作战</TabsTrigger>
+              <TabsTrigger value="review">战后复盘</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
 
-          {/* 实时作战区域 */}
-          <TabsContent value="realtime" className="mt-4">
-            <div className="grid grid-cols-12 gap-4 h-[calc(100vh-280px)]">
+        {/* 可滚动内容区域 */}
+        <div className="flex-1 overflow-auto">
+          <Tabs defaultValue="realtime" className="w-full h-full">
+            {/* 实时作战区域 */}
+            <TabsContent value="realtime" className="mt-0 p-4">
+            {/* 顶部：任务时间轴 */}
+            <TaskTimeline tasks={tasks} className="mb-4" />
 
+            {/* 下方：三列布局 */}
+            <div className="grid grid-cols-12 gap-4 h-[calc(100vh-360px)]">
+
+              {/* 左侧：地图 */}
               <div className="col-span-5 h-full">
                 <BattlefieldMap
                   targets={targets}
@@ -198,27 +210,28 @@ export default function CommandCenter() {
                 />
               </div>
 
-              <div className="col-span-4 flex flex-col gap-4 h-full">
-                <TaskTimeline tasks={tasks} />
-                <div className="flex-1 min-h-0">
-                  <TaskList
-                    tasks={tasks}
-                    firepowers={firepowers}
-                    targets={targets}
-                    onSelectTask={setSelectedTask}
-                    selectedTaskId={selectedTask?.task_id}
-                  />
-                </div>
-              </div>
-
-              <div className="col-span-3 flex flex-col gap-4 h-full">
-                <TaskControlPanel
-                  task={selectedTask}
+              {/* 中间：任务列表 */}
+              <div className="col-span-4 h-full">
+                <TaskList
+                  tasks={tasks}
                   firepowers={firepowers}
                   targets={targets}
-                  onAutoRun={handleAutoRun}
-                  isProcessing={isProcessing}
+                  onSelectTask={setSelectedTask}
+                  selectedTaskId={selectedTask?.task_id}
                 />
+              </div>
+
+              {/* 右侧：任务控制面板 + 火力单位面板 */}
+              <div className="col-span-3 flex flex-col gap-4 h-full">
+                <div className="bg-card/50 border border-border rounded-lg p-3 flex-0">
+                  <TaskControlPanel
+                    task={selectedTask}
+                    firepowers={firepowers}
+                    targets={targets}
+                    onAutoRun={handleAutoRun}
+                    isProcessing={isProcessing}
+                  />
+                </div>
 
                 <div className="flex-1 min-h-0">
                   <FirepowerPanel
@@ -233,8 +246,8 @@ export default function CommandCenter() {
             </div>
           </TabsContent>
 
-          {/* 战后复盘 */}
-          <TabsContent value="review" className="mt-4">
+            {/* 战后复盘 */}
+            <TabsContent value="review" className="mt-0 p-4">
             <div className="grid grid-cols-12 gap-4 h-[calc(100vh-280px)]">
 
               <div className="col-span-8">
@@ -259,9 +272,9 @@ export default function CommandCenter() {
               </div>
 
             </div>
-          </TabsContent>
-
-        </Tabs>
+            </TabsContent>
+          </Tabs>
+        </div>
       </main>
 
       {/* 决策弹窗（已适配为无参数发布任务模式） */}

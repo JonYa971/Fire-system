@@ -36,7 +36,6 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="dark"      // 默认黑色（关灯）
           enableSystem={false}    // 不跟随系统
-          disableTransitionOnChange
         >
           {children}
           <Analytics />

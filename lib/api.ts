@@ -1,6 +1,7 @@
 // lib/api.ts
 // 统一复用 mock-data 里的类型，避免重复定义
 import type { Task, Target, Firepower, DecisionResult, Weapon } from "./mock-data"
+import { targets as mockTargets, mockFirepowers, mockTasks } from "./mock-data"
 
 // 如果你现在是直接连后端服务器，就用完整地址：
 // 比如：http://1.2.3.4:8080/api/v1
@@ -173,27 +174,54 @@ async function fetchWeapons(token: string): Promise<WeaponWithCombat[]> {
 // 综合初始化
 // =====================
 export async function fetchInitialData() {
-  const token = await loginAdmin()
+  try {
+    const token = await loginAdmin()
 
-  const [firepowersRaw, targets, tasks, weapons] = await Promise.all([
-    fetchFirepowerUnits(token),
-    fetchTargets(token),
-    fetchTasks(token),
-    fetchWeapons(token),
-  ])
+    const [firepowersRaw, targets, tasks, weapons] = await Promise.all([
+      fetchFirepowerUnits(token),
+      fetchTargets(token),
+      fetchTasks(token),
+      fetchWeapons(token),
+    ])
 
-  // 归类武器
-  const firepowers: Firepower[] = firepowersRaw.map((fp) => {
-    const weaponsForFp = weapons
-      .filter((w) => w.combat_id === fp.firepower_id)
-      .map((w) => {
-        const { combat_id, ...rest } = w
-        return rest
-      })
-    return { ...fp, weapons: weaponsForFp }
-  })
+    // 如果后端没有返回数据，使用 mock 数据
+    const finalTargets = targets && targets.length > 0 ? targets : mockTargets
+    const finalTasks = tasks && tasks.length > 0 ? tasks : mockTasks
 
-  return { token, firepowers, targets, tasks }
+    // 归类武器
+    const firepowers: Firepower[] = firepowersRaw.map((fp) => {
+      const weaponsForFp = weapons
+        .filter((w) => w.combat_id === fp.firepower_id)
+        .map((w) => {
+          const { combat_id, ...rest } = w
+          return rest
+        })
+      return { ...fp, weapons: weaponsForFp }
+    })
+
+    // 如果火力单元为空，使用 mock
+    const finalFirepowers =
+      firepowers && firepowers.length > 0
+        ? firepowers
+        : mockFirepowers.map((fp) => ({
+            ...fp,
+            weapons: fp.weapons || [],
+          }))
+
+    return { token, firepowers: finalFirepowers, targets: finalTargets, tasks: finalTasks }
+  } catch (err) {
+    // 后端连接失败，使用完整的 mock 数据
+    console.warn("API 连接失败，使用 Mock 数据:", err)
+    return {
+      token: "mock-token",
+      firepowers: mockFirepowers.map((fp) => ({
+        ...fp,
+        weapons: fp.weapons || [],
+      })),
+      targets: mockTargets,
+      tasks: mockTasks,
+    }
+  }
 }
 
 /// =====================

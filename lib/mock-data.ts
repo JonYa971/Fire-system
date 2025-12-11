@@ -106,7 +106,7 @@ export interface DecisionResult {
 export const targets: Target[] = [
   {
     target_id: "tiananmen",
-    name: "",
+    name: "目标-天安门",
     gps_lat: 39.9087,
     gps_lng: 116.3975,
     target_health: 100,
@@ -114,7 +114,7 @@ export const targets: Target[] = [
   },
   {
     target_id: "birdnest",
-    name: "",
+    name: "目标-鸟巢",
     gps_lat: 39.9929,
     gps_lng: 116.3969,
     target_health: 100,
@@ -122,7 +122,7 @@ export const targets: Target[] = [
   },
   {
     target_id: "summer_palace",
-    name: "颐和园",
+    name: "目标-颐和园",
     gps_lat: 39.9996,
     gps_lng: 116.275,
     target_health: 100,
@@ -130,7 +130,7 @@ export const targets: Target[] = [
   },
   {
     target_id: "capital_airport",
-    name: "",
+    name: "目标-机场",
     gps_lat: 40.0524,
     gps_lng: 116.613,
     target_health: 100,
